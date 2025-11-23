@@ -1,0 +1,61 @@
+services:
+  rabbitmq1:
+    image: rabbitmq:4.1-management
+    hostname: rabbitmq1
+    container_name: rabbitmq1
+    environment:
+      RABBITMQ_NODENAME: rabbit@rabbitmq1
+      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_COOKIE}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+
+    ports:
+      - "15672:15672"   # UI
+      - "5672:5672"     # AMQP
+    networks:
+      - rabbit_net
+
+  rabbitmq2:
+    image: rabbitmq:4.1-management
+    hostname: rabbitmq2
+    container_name: rabbitmq2
+    depends_on:
+      - rabbitmq1
+    environment:
+      RABBITMQ_NODENAME: rabbit@rabbitmq2
+      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_COOKIE}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+    networks:
+      - rabbit_net
+
+  rabbitmq3:
+    image: rabbitmq:4.1-management
+    hostname: rabbitmq3
+    container_name: rabbitmq3
+    depends_on:
+      - rabbitmq1
+    environment:
+      RABBITMQ_NODENAME: rabbit@rabbitmq3
+      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_COOKIE}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+    networks:
+      - rabbit_net
+
+  haproxy:
+    image: haproxy:latest
+    container_name: haproxy
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - "5673:5672" # AMQP a través de HAProxy
+    depends_on:
+      - rabbitmq1
+      - rabbitmq2
+      - rabbitmq3
+    networks:
+      - rabbit_net
+
+networks:
+  rabbit_net:
